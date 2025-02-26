@@ -254,3 +254,115 @@ dense2.forward(activation1.output)
 activation2.forward(dense2.output)
 
 print(activation2.output[:5])
+
+
+
+
+# Calculate Network error with loss:
+
+# Cross Entropy loss building blocks
+
+softmax_output = np.array([[0.7, 0.1, 0.2],
+                           [0.1, 0.5, 0.4],
+                           [0.02, 0.9, 0.08]])
+
+class_targets = [0, 1, 1]
+
+print(softmax_output[range(len(softmax_output)), class_targets])
+
+neg_log = -np.log(softmax_output[range(len(softmax_output)), class_targets])
+
+print("Loss : ", neg_log)
+
+average_loss = np.mean(neg_log)
+
+print("Average Loss : ", average_loss)
+
+
+
+
+# If Data is OneHot Encoded, How to extract Relevant Predictions ?
+y_true_check = np.array([
+    [1, 0, 0],
+    [0, 1, 0],
+    [0, 1, 0]
+])
+
+y_pred_clipped_check = np.array([
+    [0.7, 0.2, 0.1],
+    [0.1, 0.5, 0.4],
+    [0.02, 0.9, 0.08]
+])
+
+A = y_true_check * y_pred_clipped_check
+B = np.sum(A, axis = 1)
+C = -np.log(B)
+
+print("Loss : ", C)
+print("Average Loss : ", np.mean(C))
+
+
+
+
+
+# Implementing the Loss class:
+class Loss:
+    # given model output and ground truth values
+    def calculate(self, output, y):
+
+        sample_losses = self.forward(output, y)
+
+        data_loss = np.mean(sample_losses)
+
+        return data_loss
+    
+# Implementing Categorical Cross Entropy:
+class Loss_CategoricalCrossEntropy(Loss):
+    def forward(self, y_pred, y_true):
+        samples = len(y_pred)
+
+        y_pred_clipped = np.clip(y_pred, 1e-7, 1 - 1e-7)
+
+        if(len(y_true.shape) == 1):
+            correct_confidences = y_pred_clipped[range(samples), y_true]
+        
+        elif (len(y_true.shape) == 2):
+            correct_confidences = np.sum(y_pred_clipped * y_true, axis = 1)
+        
+        negative_log_likelihoods = -np.log(correct_confidences)
+
+        return negative_log_likelihoods
+    
+softmax_outputs = np.array([[0.7, 0.1, 0.2],
+                            [0.1, 0.5, 0.4],
+                            [0.02, 0.9, 0.08]])
+
+class_targets = np.array([[1, 0, 0],
+                          [0, 1, 0],
+                          [0, 1, 0]])
+
+loss_function = Loss_CategoricalCrossEntropy()
+
+loss = loss_function.calculate(softmax_outputs, class_targets)
+print(loss)
+
+
+
+
+
+# Introducing Accuracy:
+softmax_outputs = np.array([[0.7, 0.2, 0.1],
+                            [0.1, 0.5, 0.4],
+                            [0.02, 0.9, 0.08]])
+
+# Target (ground-truth) labels for 3 samples
+class_targets = np.array([0, 1, 1])
+
+predictions = np.argmax(softmax_outputs, axis = 1)
+
+if(len(class_targets.shape) == 2):
+    class_targets = np.argmax(class_targets, axis = 1)
+
+accuracy = np.mean(predictions == class_targets)
+
+print('accuracy : ', accuracy)
